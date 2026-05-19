@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>i don't like u</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+<div class="page">
+
+  <header class="site-header">
+    <h1>oscar indigo</h1>
+    <p>i guess</p>
+  </header>
+
+  <div class="navbar">
+    <a href="index.html">- home -</a>
+    <a href="blog.html">- blog -</a>
+    <a href="music.html" class="active">- music -</a>
+  </div>
+
+  <div class="content-area">
+
+    <div class="main-content">
+
+      <div class="section-header">music reviews</div>
+
+      <ul class="post-list" id="music-list"></ul>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <div class="sidebar-box">
+        <div class="sidebar-box-title">&#9658; now playing</div>
+
+        <div class="sidebar-box-content">
+
+          <em>
+            Neutral Milk Hotel <br>
+            In the Aeroplane over the Sea
+          </em><br>
+
+          <strong>Communist Daughter</strong>
+
+          <audio id="bg-music">
+            <source src="Communist-Daughter.mp3" type="audio/mpeg">
+          </audio>
+
+          <button id="play-btn">▶ play</button>
+
+          <div class="controls">
+            <input type="range" id="seek" value="0" min="0" max="100">
+          </div>
+
+          <div class="controls">
+            <label style="font-size:11px;">volume</label>
+            <input type="range" id="volume" min="0" max="1" step="0.01" value="0.1">
+          </div>
+
+        </div>
+      </div>
+
+      ..<div class="sidebar-box">
+        <div class="sidebar-box-title">&#9658; 3 albums rn</div>
+        <div class="sidebar-box-content">
+          jeff rosenstock - worry<br>
+          csh - twin fantasy<br>
+          the smiths - meat is murder
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer class="site-footer">
+    <a href="#">back to top &uarr;</a>
+  </footer>
+
+</div>
+
+<!-- POST POPUP -->
+<div class="post-popup" id="post-popup">
+
+  <div class="site-header popup-header">
+    <h1 style="font-size:14px; margin:0;">music review</h1>
+
+    <div class="popup-controls">
+      <div class="window-close" onclick="closePost()">×</div>
+    </div>
+  </div>
+
+  <div class="popup-body" id="popup-body"></div>
+
+</div>
+
+<!-- MUSIC PLAYER SCRIPT -->
+<script>
+  const audio = document.getElementById("bg-music");
+  const btn = document.getElementById("play-btn");
+  const seek = document.getElementById("seek");
+  const volume = document.getElementById("volume");
+
+  audio.volume = parseFloat(volume.value);
+  let isPlaying = false;
+
+  btn.addEventListener("click", () => {
+    if (!isPlaying) {
+      audio.play();
+      btn.textContent = "⏸ pause";
+    } else {
+      audio.pause();
+      btn.textContent = "▶ play";
+    }
+    isPlaying = !isPlaying;
+  });
+
+  audio.addEventListener("timeupdate", () => {
+    if (audio.duration) {
+      seek.value = (audio.currentTime / audio.duration) * 100;
+    }
+  });
+
+  seek.addEventListener("input", () => {
+    audio.currentTime = (seek.value / 100) * audio.duration;
+  });
+
+  volume.addEventListener("input", () => {
+    audio.volume = parseFloat(volume.value);
+  });
+</script>
+
+<!-- MUSIC POSTS SYSTEM -->
+<script>
+let postsData = [];
+
+const list = document.getElementById("music-list");
+const popup = document.getElementById("post-popup");
+const body = document.getElementById("popup-body");
+const page = document.querySelector(".page");
+
+fetch("posts.json")
+  .then(res => res.json())
+  .then(posts => {
+    postsData = posts;
+    renderPosts(postsData);
+  })
+  .catch(err => console.error("FETCH ERROR:", err));
+
+function renderPosts(posts) {
+  list.innerHTML = "";
+
+  const musicPosts = [...posts]
+    .filter(post => post.category === "music")
+    .sort((a, b) => b.id - a.id);
+
+  musicPosts.forEach(post => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <h2>
+        <a href="#" onclick="openPost(${post.id})">${post.title}</a>
+        ${post.tag ? `<span class="tag">${post.tag}</span>` : ""}
+      </h2>
+      <p class="post-meta">
+        posted: ${post.date}
+      </p>
+      <p class="rating">${post.rating || ""}</p>
+      <p class="post-excerpt">${post.excerpt}</p>
+    `;
+
+    list.appendChild(li);
+  });
+}
+
+function openPost(id) {
+  const post = postsData.find(p => p.id === id);
+
+  body.innerHTML = `
+    <h2>${post.title}</h2>
+    <p><em>${post.date}</em></p>
+    ${post.rating ? `<p class="rating">${post.rating}</p>` : ""}
+    <p>${post.content}</p>
+  `;
+
+  popup.classList.add("open");
+
+  page.style.transform = "translateX(-400px)";
+  page.style.transition = "transform 0.3s ease";
+}
+
+function closePost() {
+  popup.classList.remove("open");
+  page.style.transform = "translateX(0px)";
+}
+</script>
+
+</body>
+</html>
